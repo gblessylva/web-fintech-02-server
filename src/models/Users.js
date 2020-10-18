@@ -1,8 +1,10 @@
+
 const mongoose = require('mongoose')
 const schema = mongoose.Schema
 
+
 const UserSchema = new schema({
-  user_name: {
+  username: {
     type:  String,
     required: [true, 'username is required'],
     minlength: [3, 'Must be greater than three characters'],
@@ -14,22 +16,28 @@ const UserSchema = new schema({
     minlength: [3, 'Must be greater than three characters'],
     maxlength: [100, 'Must not be greater than 100 Characters']
   },
-  first_name: {
+  password: {
     type:  String,
-    required: [true, 'Your Firstname is required'],
+    required: [true, 'Your Password is required'],
     minlength: [3, 'Must be greater than three characters'],
     maxlength: [100, 'Must not be greater than 100 Characters']
   },
-  last_name: {
-    type:  String,
-    required: [true, 'Your Lastname is required'],
-    minlength: [2, 'Must be greater than two characters'],
-    maxlength: [100, 'Must not be greater than 100 Characters']
+  role: {
+    type: String, required: true, default: "user"
   },
-  date_registered: { type: Date, default: Date.now },
-  phone: Number,
-  status: String,
-  role: String
-})
+   profile: {
+     type:mongoose.Schema.Types.ObjectId, 
+     ref : 'Profile',
+     required: true
+    },
+    business: {
+      type:mongoose.Schema.Types.ObjectId, 
+      ref : 'business',
+     
+  },
+   
+  dateRegistered: { type: Date, default: Date.now }
+
+  })
 
 module.exports = mongoose.model('User', UserSchema)
