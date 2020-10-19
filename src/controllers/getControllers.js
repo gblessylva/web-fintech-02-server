@@ -13,8 +13,7 @@ const homeRoute = async (req, res) => {
   const getUsersRoute = async (req, res) => {
     try {
       const users = await User.find()
-      .populate("profile")
-      
+      .populate("profile business")
       return res.status(200).json({
         users
       })
@@ -40,13 +39,10 @@ const homeRoute = async (req, res) => {
   }
   const getUserByID = async (req, res) => {
     const _id =req.params.id
-
-    const business =await Business.find({})
-        console.log(business)
     try {
         
         const user = await User.findById({_id})
-        .populate("profile")
+        .populate("profile business")
         
         if(!user){
           return res.status(404).json("No such User Found")

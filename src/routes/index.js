@@ -2,7 +2,7 @@ const express = require('express')
 const User = require('../models/Users')
 const router = express.Router()
 const {homeRoute, getUsersRoute, getUserByID, getProjects, getProfile, getBusiness } = require('../controllers/getControllers');
-const {postNewUser, postBusiness} = require('../controllers/postControllers');
+const {postNewUser, postBusiness, postProject, postMilestone} = require('../controllers/postControllers');
 const {deleteOneUser} = require('../controllers/deleteControllers')
 const {patchUserByID} = require('../controllers/patchControllers')
 const {putUserByID} = require('../controllers/putControllers')
@@ -22,6 +22,9 @@ router.get('/api/v1/users', getUsersRoute)
 
 router.post('/api/v1/users', postNewUser)
 router.post('/api/v1/business', postBusiness)
+router.post('/api/v1/projects', postProject)
+router.post('/api/v1/milestones', postMilestone)
+
 router.get('/api/v1/business', getBusiness)
 //Get one User
 router.get('/api/v1/users/:id', getUserByID)

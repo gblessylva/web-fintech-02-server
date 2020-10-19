@@ -33,6 +33,15 @@ const BusinessSchema   = mongoose.Schema({
         ref : 'User',
         required: true
     },
+    registrationDate: {
+        type: String
+    },
+    projects: [
+        {
+        type:mongoose.Schema.Types.ObjectId, 
+        ref : 'Projects',
+        }
+    ]
 
 })
 module.exports = mongoose.model('business', BusinessSchema)

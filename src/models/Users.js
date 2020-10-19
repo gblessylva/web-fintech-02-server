@@ -30,11 +30,10 @@ const UserSchema = new schema({
      ref : 'Profile',
      required: true
     },
-    business: {
+    business: [{
       type:mongoose.Schema.Types.ObjectId, 
-      ref : 'business',
-     
-  },
+     ref : 'business',
+    }],
    
   dateRegistered: { type: Date, default: Date.now }
 
