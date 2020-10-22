@@ -1,7 +1,7 @@
 const User = require('../models/Users')
 const Profile = require('../models/Profile')
 const Business = require('../models/Business')
-const { where } = require('../models/Users')
+const APIFeatures = require ('../utilities/APIFeatures')
 const homeRoute = async (req, res) => {
     try {
         return res.status(200).send('Home Route')
@@ -76,15 +76,20 @@ const homeRoute = async (req, res) => {
     }
   }
   const getProfile = async (req, res, next) =>{
+    const features = new APIFeatures(Profile.find(), req.query )
+    .filtering()
+    .sorting()
     try{
-      const profile = await Profile.find()
+      const profile = await features.query
       .populate('userID')
       .then(results=>{
-        const count = results.length      
-        res.status(200).json({
+        const count = results.length  
+          res.status(200).json({
           count,
           allUsers: results
         })
+         
+        
       })
     }catch(err){
       return res.status(500).json({

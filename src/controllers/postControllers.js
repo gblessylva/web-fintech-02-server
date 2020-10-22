@@ -3,6 +3,16 @@ const Profile = require('../models/Profile');
 const Business = require('../models/Business')
 const Projects = require('../models/Projects');
 const Milestones = require('../models/Milestones');
+const jwt = require ('jsonwebtoken')
+const cryptoRandomString = require ('crypto-random-string');
+const {hash, compare } = require('../utilities/bcrypt');
+const emailService = require('../utilities/emailService');
+const Code = require('../models/verificationCode')
+const SME = require('../models/SME');
+const nodemailer = require('nodemailer')
+
+const {JWT_SEC, EMAIL_USER} = require ('../utilities/secrets')
+
 
 const postNewUser =async (req, res, next) => {
     try {
@@ -208,7 +218,98 @@ const postNewUser =async (req, res, next) => {
       res.status(500).json({message: error})
     }
   }
-    
+  
+  const registerSME = async (req, res, next) =>{
+    let errMsg =[]
+    const {username, password, confirmPassword, email} =req.body
+
+    try {
+      if(!username || !password || !confirmPassword || !email){
+        errMsg.push({message: "All fileds are required"});
+      }
+      if(password != confirmPassword){
+        errMsg.push({message: "Password does not match"});
+      }
+    //   if (!password.match(
+    //         /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{6,}$/) ){
+    //     errors.push({
+    //         msg:
+    //             "Your password must be at least 6 characters long and contain a lowercase letter, an uppercase letter, a numeric digit and a special character.",
+    //     });
+    // }
+      if(errMsg > 0){
+        res.statu(500).json({
+          errMsg
+        })
+      }else{
+          const userExists = await SME.findOne({email: email})
+          if(userExists) {
+            errMsg.push({message: "Email already exists"})
+            res.send({success: false, errMsg})
+          }else{
+            const hashPwd = await hash(password)
+            const newSME = new SME({
+              username, 
+              password: hashPwd, 
+              confirmPassword, 
+              email
+            })
+            const sme = await newSME.save()
+            const payload = {
+              id: sme._id,
+              email: sme.email,
+              username: sme.username,
+            }
+          // 
+           const signOptions = {
+             expiresIn:  "1h"
+           };
+           const token = jwt.sign(payload, JWT_SEC, signOptions );
+          //req.session.token = token;
+           
+          // console.log(token)
+
+            const baseUrl = req.protocol + "://" + req.get("host");
+            const secretCode = cryptoRandomString({length: 15});
+            
+            const newCode = new Code({
+              code: secretCode,
+              email: sme.email,
+            });
+  
+            await newCode.save();
+            //console.log(newCode)
+            
+            const emailData = {
+              from : `Inesta <${EMAIL_USER}>`,
+              to: sme.email,
+              subject: 'Investa Activation Link',
+              text: `Dear ${sme.username} Please use the following link within the next 10 minutes to activate your account on Investa: ${baseUrl}/api/v1/auth/verification/verify-account/${sme._id}/${secretCode}`,
+              html: `<p>Please use the following link within the next 10 minutes to activate your account on Investa: <strong><a href="${baseUrl}/api/v1/auth/verification/verify-account/${sme._id}/${secretCode}" target="_blank">Email</a></strong></p>`,
+            }
+            let sentMail = await emailService.sendMail(emailData)
+
+            console.log("Message sent: %s", sentMail);
+            console.log("Preview URL: %s", nodemailer.getTestMessageUrl(sentMail));
+        
+            res.json({
+              success: true,
+              userRole: sme.role,
+              userId: sme._id,
+              userStatus: sme.status,
+          });
+        }
+      }
+       
+    } catch (err) {
+      console.log("Error on /api/auth/register: ", err);
+      errMsg.push({
+          msg: "Oh, something went wrong. Please try again!",
+      });
+      res.json({ success: false, errMsg });
+  }
+
+  }
 
 
 
@@ -217,5 +318,6 @@ module.exports ={
     postNewUser,
     postBusiness,
     postProject,
-    postMilestone
+    postMilestone,
+    registerSME
 }
