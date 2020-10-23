@@ -1,12 +1,17 @@
 const express = require('express')
 const User = require('../models/Users')
 const router = express.Router()
-const {homeRoute, getUsersRoute, getUserByID, getProjects, getProfile, getBusiness, verifyPendingUser, verifiedAccount } = require('../controllers/getControllers');
-const {postNewUser, postBusiness, postProject, postMilestone, registerSME, signIn} = require('../controllers/postControllers');
+const {homeRoute, getUsersRoute, getUserByID, getProjects, 
+    getProfile, getBusiness, verifyPendingUser, verifiedAccount } = require('../controllers/getControllers');
+const {
+    postNewUser, postBusiness, postProject, postMilestone, 
+    registerSME, signIn, expiredActivationLink, getPasswordResetCode, verifyPasswordResetcode
+
+} = require('../controllers/postControllers');
 const {deleteOneUser} = require('../controllers/deleteControllers')
 const {patchUserByID} = require('../controllers/patchControllers')
 const {putUserByID} = require('../controllers/putControllers');
-const { sign } = require('jsonwebtoken');
+
 
 
 //Home Route
@@ -27,11 +32,16 @@ router.post('/api/v1/projects', postProject)
 router.post('/api/v1/milestones', postMilestone)
 router.post('/api/v1/sme/register', registerSME)
 router.post('/api/v1/sme/login', signIn)
-router.get('/api/v1/business', getBusiness)
+router.post('/api/v1/verify-account/re-activate', expiredActivationLink)
+router.post('/api/v1/auth/reset-password-code', getPasswordResetCode)
+router.post('/api/v1/auth/reset-password/', verifyPasswordResetcode )
+
+
 //Get one User
 router.get('/api/v1/users/:id', getUserByID)
 router.get('/api/v1/auth/verify-account/:userId/:secretCode', verifyPendingUser)
 router.get('/api/v1/account-verified', verifiedAccount)
+router.get('/api/v1/business', getBusiness)
 
 //Edit User
 router.patch('/api/v1/users/:id', patchUserByID )
