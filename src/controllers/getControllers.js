@@ -2,6 +2,8 @@ const User = require('../models/Users')
 const Profile = require('../models/Profile')
 const Business = require('../models/Business')
 const APIFeatures = require ('../utilities/APIFeatures')
+const SME = require('../models/SME')
+const Code = require('../models/verificationCode')
 const homeRoute = async (req, res) => {
     try {
         return res.status(200).send('Home Route')
@@ -98,11 +100,49 @@ const homeRoute = async (req, res) => {
     }
   }
 
+  const verifyPendingUser = async (req, res, next) =>{
+    const baseUrl = req.protocol + "://" + req.get("host");
+    const errorMsg = []
+   const _id = req.params.userId
+    try {
+      const user = await SME.findById({_id})
+      const response = await Code.findOne({
+        email: user.email,
+        code: req.params.secretCode,
+      });
+
+      if(!user){
+        res.sendStatus(401);
+      }else{
+        await SME.updateOne({
+          email: user.email,
+          status: "active"
+        })
+        await Code.deleteMany({email: user.email})
+
+        const redirectPath = `${baseUrl}/api/v1/account-verified`
+        
+        await res.redirect(redirectPath);
+      }
+      
+    } catch (error) {
+      res.send(error)
+    }
+  }
+
+  const verifiedAccount = (req, res, next) =>{
+    res.json({
+      message: "You have been verified successfully, please login"
+    })
+  }
+
 module.exports ={
     homeRoute,
     getUsersRoute,
     getUserByID,
     getProjects,
     getProfile,
-    getBusiness
+    getBusiness,
+    verifyPendingUser,
+    verifiedAccount
 }
