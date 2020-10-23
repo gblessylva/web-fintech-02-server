@@ -11,7 +11,7 @@ const Code = require('../models/verificationCode')
 const SME = require('../models/SME');
 const nodemailer = require('nodemailer')
 
-const {JWT_SEC, EMAIL_USER} = require ('../utilities/secrets')
+const {JWT_SEC, EMAIL_USER} = require ('../utilities/secrets');
 
 
 const postNewUser =async (req, res, next) => {
@@ -284,13 +284,13 @@ const postNewUser =async (req, res, next) => {
               from : `Inesta <${EMAIL_USER}>`,
               to: sme.email,
               subject: 'Investa Activation Link',
-              text: `Dear ${sme.username} Please use the following link within the next 10 minutes to activate your account on Investa: ${baseUrl}/api/v1/auth/verification/verify-account/${sme._id}/${secretCode}`,
-              html: `<p>Please use the following link within the next 10 minutes to activate your account on Investa: <strong><a href="${baseUrl}/api/v1/auth/verification/verify-account/${sme._id}/${secretCode}" target="_blank">Email</a></strong></p>`,
+              text: `Dear ${sme.username} Please use the following link within the next 10 minutes to activate your account on Investa: ${baseUrl}/api/v1/auth/verify-account/${sme._id}/${secretCode}`,
+              html: `<p>Please use the following link within the next 10 minutes to activate your account on Investa: <strong><a href="${baseUrl}/api/v1/auth/verify-account/${sme._id}/${secretCode}" target="_blank">Email</a></strong></p>`,
             }
             let sentMail = await emailService.sendMail(emailData)
 
-            console.log("Message sent: %s", sentMail);
-            console.log("Preview URL: %s", nodemailer.getTestMessageUrl(sentMail));
+            // console.log("Message sent: %s", sentMail);
+            // console.log("Preview URL: %s", nodemailer.getTestMessageUrl(sentMail));
         
             res.json({
               success: true,
@@ -311,6 +311,64 @@ const postNewUser =async (req, res, next) => {
 
   }
 
+  const signIn = async (req, res, next)=>{
+    const {email, password} = req.body
+    let errMsg = [];
+
+    if(!email || !password){
+      errMsg.push({message: "Password and Email Fileds are required"})
+    }else{
+      try {
+        const user = await SME.findOne({email})
+          if(!user){
+            res.status(404).json({
+              message: " Invalid user or password Combination"
+            })
+          }else{
+            const pwdCheck = await compare(password, user.password)
+            if(!pwdCheck){
+                errMsg.push({
+                  message: "Invalid password and Email compination"
+                })
+                res.json({ success: false, errMsg });              
+            }else{
+              const payload = {
+                id: user._id,
+                email: user.email,
+                username: user.username,
+              }
+            // 
+             const signOptions = {
+               expiresIn:  "1h"
+             };
+
+             const token = jwt.sign(payload, JWT_SEC, signOptions );
+              req.header.token = token;
+              //console.log(token, user)
+              const result = {
+                userId: user._id,
+                email: user.email,
+                username: user.username,
+                role: user.role,
+                status: user.status,
+                token
+              }
+              res.status(200).json({
+                result
+              })
+            }
+            
+          }
+        
+      } catch (error) {
+        res.status(500).json({
+          message: "An internal Server Error Occured"
+        })
+      }
+    }
+
+  }
+
 
 
 
@@ -319,5 +377,6 @@ module.exports ={
     postBusiness,
     postProject,
     postMilestone,
-    registerSME
+    registerSME,
+    signIn
 }
