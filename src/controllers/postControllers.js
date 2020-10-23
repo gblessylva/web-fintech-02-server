@@ -12,6 +12,7 @@ const SME = require('../models/SME');
 const nodemailer = require('nodemailer')
 
 const {JWT_SEC, EMAIL_USER} = require ('../utilities/secrets');
+const { async } = require('crypto-random-string');
 
 
 const postNewUser =async (req, res, next) => {
@@ -311,6 +312,63 @@ const postNewUser =async (req, res, next) => {
 
   }
 
+  const expiredActivationLink = async (req, res, next)=>{
+    const baseUrl = req.protocol + "://" + req.get("host");
+    const {email, userId} = req.body
+    try {
+      const isRegistered = await SME.findOne({email})
+      if(!email){
+        res.json({
+          message: "Email Field is required"
+        })
+      }else{
+          if(!isRegistered){
+            res.send({
+              message: "Not a regisetered email"
+            })
+          }else{
+            if(isRegistered && isRegistered.status == "active"){
+              res.json({
+                message: "You already activated please login"
+              })
+            }else{
+                 await Code.deleteMany({email: isRegistered.email})
+                const secreteCode = cryptoRandomString({
+                  length: 10,
+                })
+                const newCode = new Code({
+                  email: isRegistered.email,
+                  code: secreteCode
+                })
+
+               await newCode.save()
+               
+                const emailData = {
+                  from : `Inesta <${EMAIL_USER}>`,
+                  to: isRegistered.email,
+                  subject: 'Investa Activation Link',
+                  text: `Dear ${isRegistered.username} Please use the following link within the next 10 minutes to activate your account on Investa: ${baseUrl}/api/v1/auth/verify-account/${isRegistered._id}/${secreteCode}`,
+                  html: `<p>Please use the following link within the next 10 minutes to activate your account on Investa: <strong><a href="${baseUrl}/api/v1/auth/verify-account/${isRegistered._id}/${secreteCode}" target="_blank"><button style="background: lightblue; pading: 10px, border: none; outline: none; cursor: pointer; color: white;">Verify</button></a></strong></p>`,
+                }
+              
+                let sentMail = await emailService.sendMail(emailData)
+                  
+                console.log("Message sent: %s", sentMail);
+
+                res.json({
+                  newCode
+                })
+              }
+            }
+            
+        }
+      
+    } catch (error) {
+      res.json({error})
+    }
+  }
+
+
   const signIn = async (req, res, next)=>{
     const {email, password} = req.body
     let errMsg = [];
@@ -369,6 +427,97 @@ const postNewUser =async (req, res, next) => {
 
   }
 
+  const getPasswordResetCode = async (req, res, next) =>{
+    const baseUrl = req.protocol + "://" + req.get("host");
+    const errorMSg = [];
+    const {email} = req.body;
+
+    try {
+      if(!email){
+        errorMSg.push("Email field is required")
+      }
+      const isRegistered = await SME.findOne({email})
+
+      if(!isRegistered){
+        errorMSg.push({
+          message: "No such User"
+        })
+        res.status(404).json({
+          errorMSg
+        })
+      }else{
+        const secreteCode = cryptoRandomString({
+          length: 10,
+        })
+        const newCode = new Code({
+          email: isRegistered.email,
+          code: secreteCode
+        })
+
+       await newCode.save()
+       
+        
+       
+        const emailData = {
+          from : `Investa <${EMAIL_USER}>`,
+          to: isRegistered.email,
+          subject: 'Investa Password Reset Link',
+          text: `Dear ${isRegistered.username}, Please use  this activation code ${secreteCode}  or click on the link within the next 10 minutes to reset your Investa Password: ${baseUrl}/api/v1/auth/reset-password/`,
+          html: `<p>Dear ${isRegistered.username}, Please use this activation code ${secreteCode} or click on link within the next 10 minutes reset your Investa password: <strong><a href="${baseUrl}/api/v1/auth/reset-password/" target="_blank"><button style="background: lightblue; pading: 10px, border: none; outline: none; cursor: pointer; color: white;">Verify</button></a></strong></p>`,
+        }
+        
+        console.log(emailData)
+        let sentMail = await emailService.sendMail(emailData)
+
+        res.status(200).json({
+          message: "Password Reset Link Sent", sentMail
+
+        })
+
+      }
+      
+    } catch (error) {
+      errorMSg.push(error)
+      res.send(errorMSg)
+    }
+
+  } 
+
+  const verifyPasswordResetcode = async (req, res, next) =>{
+    const {email, password, confirmPassword, code} = req.body
+    const errMsg = []
+    if(!email || !password || !confirmPassword || !code ){
+      errMsg.push("All fileds are required")
+    }
+    if(password != confirmPassword){
+      errMsg.push("Password does not match")
+    }
+    
+    if(errMsg.length > 0){
+      res.status(500).json({
+        success: false, errMsg
+      })
+    }else{
+      try {
+        const hasCode = await Code.findOne({code, email})
+        if(!hasCode){
+          res.status(404).json({
+            message: "The code you entered is not correct"
+          })
+        }else{
+              const newHashedPw = await hash(password);
+                await SME.updateOne({ email }, { password: newHashedPw });
+                await Code.deleteOne({ email, code });
+                res.json({ success: true, message: "Password Successfully Changed, You can login" });
+        }
+        
+      } catch (error) {
+        res.status(500).json({
+          message: "Oops, unknown error occured"
+        })
+      }
+    }
+  }
 
 
 
@@ -378,5 +527,8 @@ module.exports ={
     postProject,
     postMilestone,
     registerSME,
-    signIn
+    signIn,
+    expiredActivationLink,
+    getPasswordResetCode,
+    verifyPasswordResetcode
 }
