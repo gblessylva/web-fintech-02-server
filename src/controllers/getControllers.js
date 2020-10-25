@@ -4,6 +4,7 @@ const Business = require('../models/Business')
 const APIFeatures = require ('../utilities/APIFeatures')
 const SME = require('../models/SME')
 const Code = require('../models/verificationCode')
+const Projects = require('../models/Projects')
 const homeRoute = async (req, res) => {
     try {
         return res.status(200).send('Home Route')
@@ -28,8 +29,11 @@ const homeRoute = async (req, res) => {
   const getBusiness = async(req, res, next) =>{
     try{
       const business = await Business.find()
-      .populate("userID")
+      // .populate("userID")
+      // .populate({ path: 'verifyDocs', select: 'certificate por finDoc'})
+      const project = await Projects.find({companyID: business[0]._id})
       res.status(200).json({
+        project,
         business
       })
 
@@ -64,7 +68,8 @@ const homeRoute = async (req, res) => {
 
   const getProjects = async (req, res, next) =>{
     try{
-      const profile = await profile.find()
+      const project = await Projects.find()
+      .populate('milesStones')
       .then(results=>{
         res.status(201).json({
           results

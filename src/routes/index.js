@@ -5,13 +5,18 @@ const {homeRoute, getUsersRoute, getUserByID, getProjects,
     getProfile, getBusiness, verifyPendingUser, verifiedAccount } = require('../controllers/getControllers');
 const {
     postNewUser, postBusiness, postProject, postMilestone, 
-    registerSME, signIn, expiredActivationLink, getPasswordResetCode, verifyPasswordResetcode
+    registerSME, signIn, expiredActivationLink, getPasswordResetCode, verifyPasswordResetcode, verifySMEDocs
 
 } = require('../controllers/postControllers');
 const {deleteOneUser} = require('../controllers/deleteControllers')
 const {patchUserByID} = require('../controllers/patchControllers')
 const {putUserByID} = require('../controllers/putControllers');
+const {upload, checkFiles} = require('../utilities/middleware/smeFileUploads')
+const multer = require('multer')
 
+const send = multer({
+    dest: './uploads/smeverify/'
+})
 
 
 //Home Route
@@ -26,6 +31,11 @@ router.get('/api/v1/projects', getProjects)
 router.get('/api/v1/users', getUsersRoute)
 //Register New User
 
+const fiilefileds = [
+    {name: 'certificate', maxCount: 1},
+    {name: 'por', maxCount: 1},
+    {name: 'finDoc', maxCount: 1}
+];
 router.post('/api/v1/users', postNewUser)
 router.post('/api/v1/business', postBusiness)
 router.post('/api/v1/projects', postProject)
@@ -35,6 +45,7 @@ router.post('/api/v1/sme/login', signIn)
 router.post('/api/v1/verify-account/re-activate', expiredActivationLink)
 router.post('/api/v1/auth/reset-password-code', getPasswordResetCode)
 router.post('/api/v1/auth/reset-password/', verifyPasswordResetcode )
+router.post('/api/v1/upload-business-docs/',  upload.fields(fiilefileds), checkFiles, verifySMEDocs )
 
 
 //Get one User

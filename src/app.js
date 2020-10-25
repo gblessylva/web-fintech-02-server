@@ -11,6 +11,8 @@ app.use(express.json());
 app.use(cors())
 app.use(routes)
 
+app.use(express.static(__dirname));
+
 mongoose.connect(process.env.DATABASE_URL, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
 
 const db = mongoose.connection

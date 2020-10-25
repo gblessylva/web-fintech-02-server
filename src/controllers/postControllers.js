@@ -9,10 +9,11 @@ const {hash, compare } = require('../utilities/bcrypt');
 const emailService = require('../utilities/emailService');
 const Code = require('../models/verificationCode')
 const SME = require('../models/SME');
-const nodemailer = require('nodemailer')
+const verifyDocs = require('../models/SMEVerifyImages')
 
 const {JWT_SEC, EMAIL_USER} = require ('../utilities/secrets');
-const { async } = require('crypto-random-string');
+
+
 
 
 const postNewUser =async (req, res, next) => {
@@ -520,6 +521,42 @@ const postNewUser =async (req, res, next) => {
   }
 
 
+  const verifySMEDocs = async (req, res, next) =>{
+
+    try{
+
+      if(req.files.por == undefined || req.files.finDoc == undefined || req.files.certificate == undefined || req.body.business == ''){      
+        res.send({
+          message: "All fileds are required"
+        })
+        return
+      }else{
+
+      const certificate = req.files.certificate[0].path;
+      const  por = req.files.por[0].path;
+      const finDoc = req.files.finDoc[0].path;
+      const business = req.body.business
+
+      const sendDoc = await new verifyDocs({
+        certificate, por, finDoc, business
+      })
+      const biz= await Business.findByIdAndUpdate(business, 
+        { $push: { verifyDocs: sendDoc._id } },
+        { new: true, useFindAndModify: false },
+      );
+      
+      await sendDoc.save()
+
+        res.send({
+          sendDoc, biz
+        })
+    } 
+  }catch (error )
+      { console.log(error)}
+  }
+  
+
+
 
 module.exports ={
     postNewUser,
@@ -530,5 +567,6 @@ module.exports ={
     signIn,
     expiredActivationLink,
     getPasswordResetCode,
-    verifyPasswordResetcode
+    verifyPasswordResetcode,
+    verifySMEDocs
 }
