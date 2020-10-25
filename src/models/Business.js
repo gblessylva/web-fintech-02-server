@@ -41,6 +41,12 @@ const BusinessSchema   = mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId, 
         ref : 'Projects',
         }
+    ],
+    verifyDocs: [
+        {
+        type:mongoose.Schema.Types.ObjectId, 
+        ref : 'SMEVerifyDocs',
+        }
     ]
 
 })
