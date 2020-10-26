@@ -9,23 +9,19 @@ const BusinessSchema   = mongoose.Schema({
     numberOfEmployees: String,
     registrationID: {
         type: String, 
-        required :true
     },
     regstrationDate: String,
     businessType: {
         type:String, 
-        required: true
     },
     category: {
         type: String,
-        required: true
     },
     businessDescription: {
         type: String
     },
     annualIncome: {
         type: Number,
-        required: true,
         default: 0
     },
     userID: {
