@@ -9,9 +9,10 @@ const {
 
 } = require('../controllers/postControllers');
 const {deleteOneUser} = require('../controllers/deleteControllers')
-const {patchUserByID} = require('../controllers/patchControllers')
+const {patchUserByID, patchBusinessById} = require('../controllers/patchControllers')
 const {putUserByID} = require('../controllers/putControllers');
 const {upload, checkFiles} = require('../utilities/middleware/smeFileUploads')
+const {getBusinessById} = require('../controllers/getById')
 const multer = require('multer')
 
 const send = multer({
@@ -56,7 +57,8 @@ router.get('/api/v1/business', getBusiness)
 
 //Edit User
 router.patch('/api/v1/users/:id', patchUserByID )
-
+router.get('/api/v1/business/:id', getBusinessById)
+router.patch('/api/v1/business/:id', patchBusinessById)
 //Delete Single User
 
 router.delete('/api/v1/users/:id', deleteOneUser)
