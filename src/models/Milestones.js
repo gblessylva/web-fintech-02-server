@@ -24,7 +24,8 @@ const MilsestoneSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        default: "To Do"
+        required: true,
+        default: "pending"
     },
     projectID: {
         type:mongoose.Schema.Types.ObjectId, 

@@ -2,7 +2,7 @@ const express = require('express')
 const User = require('../models/Users')
 const router = express.Router()
 const {homeRoute, getUsersRoute, getUserByID, getProjects, 
-    getProfile, getBusiness, verifyPendingUser, verifiedAccount } = require('../controllers/getControllers');
+    getProfile, getBusiness, verifyPendingUser, verifiedAccount, getMilestones } = require('../controllers/getControllers');
 const {
     postNewUser, postBusiness, postProject, postMilestone, 
     registerSME, signIn, expiredActivationLink, getPasswordResetCode, verifyPasswordResetcode, verifySMEDocs
@@ -29,6 +29,7 @@ router.get('/api/v1/profile', getProfile )
 //get all Projects
 router.get('/api/v1/projects', getProjects)
 //Get all Users
+router.get('/api/v1/milestones', getMilestones)
 router.get('/api/v1/users', getUsersRoute)
 //Register New User
 

@@ -5,6 +5,7 @@ const APIFeatures = require ('../utilities/APIFeatures')
 const SME = require('../models/SME')
 const Code = require('../models/verificationCode')
 const Projects = require('../models/Projects')
+const Milestones= require('../models/Milestones')
 const homeRoute = async (req, res) => {
     try {
         return res.status(200).send('Home Route')
@@ -17,9 +18,7 @@ const homeRoute = async (req, res) => {
     try {
       const users = await User.find()
       .populate("profile business")
-      return res.status(200).json({
-        users
-      })
+      return res.status(200).json(users)
         
     } catch (error) {
         return res.status(500).json({"error":error})
@@ -69,11 +68,9 @@ const homeRoute = async (req, res) => {
   const getProjects = async (req, res, next) =>{
     try{
       const project = await Projects.find()
-      .populate('milesStones')
+      .populate('milestones')
       .then(results=>{
-        res.status(201).json({
-          results
-        })
+        res.status(201).json(results)
       })
       
     }catch(error){
@@ -81,6 +78,21 @@ const homeRoute = async (req, res) => {
         message: error
       })
     }
+  }
+  const getMilestones = async(req, res, next)=>{
+    
+    try {
+      Milestones.find()
+      .select('status name description amount duration startdate endDate projectID')
+      .then(result=>{
+        res.status(200).json(result)
+      })
+      
+    } catch (error) {
+      console.log(error)
+    }
+
+    
   }
   const getProfile = async (req, res, next) =>{
     const features = new APIFeatures(Profile.find(), req.query )
@@ -149,5 +161,6 @@ module.exports ={
     getProfile,
     getBusiness,
     verifyPendingUser,
-    verifiedAccount
+    verifiedAccount,
+    getMilestones
 }

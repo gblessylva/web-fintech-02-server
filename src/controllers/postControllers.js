@@ -181,9 +181,10 @@ const postNewUser =async (req, res, next) => {
   }
   const createMileStone = async function(projectID, milestone) {
     const docMilestone = await Milestones.create(milestone);
+    console.log('new', milestone)
     return Projects.findByIdAndUpdate(
       projectID, 
-      { $push: { milesStones: docMilestone._id } },
+      { $push: { milestones: docMilestone._id } },
       { new: true, useFindAndModify: false },
     );
   };
@@ -212,9 +213,7 @@ const postNewUser =async (req, res, next) => {
       }
       
       await createMileStone(projectID, milestone)
-      return res.status(201).json({
-        milestone
-      })
+      return res.status(201).json(milestone)
 
     } catch (error) {
       res.status(500).json({message: error})
@@ -239,15 +238,16 @@ const postNewUser =async (req, res, next) => {
     //             "Your password must be at least 6 characters long and contain a lowercase letter, an uppercase letter, a numeric digit and a special character.",
     //     });
     // }
-      if(errMsg > 0){
-        res.statu(500).json({
+      if(errMsg.length > 0){
+        res.status(500).json({
           errMsg
         })
       }else{
           const userExists = await SME.findOne({email: email})
           if(userExists) {
             errMsg.push({message: "Email already exists"})
-            res.send({success: false, errMsg})
+            res.status(500).send({success: false, errMsg})
+            console.log(errMsg)
           }else{
             const hashPwd = await hash(password)
             const newSME = new SME({
@@ -267,10 +267,6 @@ const postNewUser =async (req, res, next) => {
              expiresIn:  "1h"
            };
            const token = jwt.sign(payload, JWT_SEC, signOptions );
-          //req.session.token = token;
-           
-          // console.log(token)
-
             const baseUrl = req.protocol + "://" + req.get("host");
             const secretCode = cryptoRandomString({length: 15});
             
@@ -305,12 +301,19 @@ const postNewUser =async (req, res, next) => {
        
     } catch (err) {
       console.log("Error on /api/auth/register: ", err);
-      errMsg.push({
+      if(err.errno = -3008){
+        errMsg.push({
+          msg: "Unable to send you a mail, check your internet connectivity",
+      })
+      res.json({ success: false, errMsg });
+      }else{
+        errMsg.push({
           msg: "Oh, something went wrong. Please try again!",
       });
       res.json({ success: false, errMsg });
+     
+    }  
   }
-
   }
 
   const expiredActivationLink = async (req, res, next)=>{

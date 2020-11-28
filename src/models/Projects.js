@@ -16,7 +16,12 @@ const ProjectSchema = mongoose.Schema({
         required: true,
         default: 0
     },
-    milesStones:[
+    status:{
+        type: String,
+        required: true,
+        default: "pending"
+    },
+    milestones:[
         {
             type:mongoose.Schema.Types.ObjectId, 
             ref : 'Milestones',
